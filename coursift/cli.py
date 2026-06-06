@@ -106,10 +106,27 @@ def build(
 
     session_nodes, session_edges = [], []
     if not no_sessions:
+        from coursift.lessons import mine_lessons, lessons_to_nodes_edges
         with console.status("Indexing Claude sessions..."):
             entries = index_sessions(projects)
             session_nodes, session_edges = sessions_to_nodes_edges(entries)
         rprint(f"  [dim]sessions[/dim] — {len(entries)} sessions, {len(session_nodes)} nodes")
+
+        with console.status("Mining failure lessons..."):
+            lessons = mine_lessons(projects)
+            lesson_nodes, lesson_edges = lessons_to_nodes_edges(lessons)
+        session_nodes.extend(lesson_nodes)
+        session_edges.extend(lesson_edges)
+        rprint(f"  [dim]lessons[/dim] — {len(lessons)} failure lesson(s) mined")
+
+    # Temporal coupling from git history
+    from coursift.coupling import detect_all as detect_coupling_all, coupling_to_edges
+    with console.status("Mining temporal coupling (git)..."):
+        coupling_pairs = detect_coupling_all(projects)
+        coupling_edges = coupling_to_edges(coupling_pairs)
+    session_edges.extend(coupling_edges)
+    if coupling_pairs:
+        rprint(f"  [dim]coupling[/dim] — {len(coupling_pairs)} co-change pair(s)")
 
     with console.status("Building graph..."):
         graph = build_graph(all_nodes, all_edges, session_nodes, session_edges)
@@ -312,6 +329,98 @@ def forget(older_than: str = typer.Argument(..., help="Age e.g. 90d, 4w, 12h")):
                f"{r['remaining']} remain.")
     else:
         rprint(f"[yellow]{r['status']}[/yellow]")
+
+
+@app.command()
+def lessons(
+    project: str = typer.Option(None, "--project", "-p", help="Filter to one project name"),
+):
+    """Show failure lessons mined from your Claude sessions (avoid repeating them)."""
+    from coursift.lessons import mine_lessons
+    from coursift.config import list_projects
+    found = mine_lessons(list_projects())
+    if project:
+        found = [l for l in found if project.lower() in l.project.lower()]
+    if not found:
+        rprint("[green]No failure patterns found in your sessions.[/green]")
+        return
+    rprint(f"\n[bold]{len(found)} failure lesson(s) — don't repeat these:[/bold]\n")
+    icon = {"tool_error": "💥", "user_correction": "🙅", "self_correction": "🔄"}
+    for l in found[:30]:
+        rprint(f"{icon.get(l.kind, '⚠')} [bold cyan]{l.project}[/bold cyan] "
+               f"[dim]({l.kind})[/dim] — {l.signal}")
+        rprint(f"   [dim]{l.context[:160]}[/dim]")
+
+
+@app.command()
+def impact(
+    symbol: str = typer.Argument(..., help="Symbol/file you want to change"),
+    depth: int = typer.Option(3, "--depth", "-d", help="Max dependency depth"),
+):
+    """Blast radius: what depends on this symbol BEFORE you change it."""
+    from coursift.impact import blast_radius
+    r = blast_radius(symbol, max_depth=depth)
+    if r["status"] == "not_found":
+        rprint(f"[yellow]'{symbol}' not found in the graph.[/yellow]")
+        return
+    if r["status"] != "ok":
+        rprint(f"[yellow]{r['status']}[/yellow]")
+        return
+    color = {"LOW": "green", "MEDIUM": "yellow", "HIGH": "red"}[r["risk"]]
+    rprint(f"\n[bold]Blast radius for '{symbol}'[/bold] — risk: [{color}]{r['risk']}[/{color}]")
+    rprint(f"  {r['total_impacted']} node(s) depend on it across {len(r['by_project'])} project(s)")
+    if r["cross_project"]:
+        rprint(f"  [red]⚠ CROSS-PROJECT impact:[/red] {r['by_project']}")
+    rprint("\n  Most directly affected:")
+    for n in r["top_impacted"][:12]:
+        rprint(f"    [{n.get('kind')}] {n.get('label')} ({n.get('project')}) depth={n['depth']}")
+
+
+@app.command()
+def coupling(
+    min_support: int = typer.Option(3, "--min-support", help="Min commits together"),
+):
+    """Files that change together (temporal coupling from git history)."""
+    from coursift.coupling import detect_all
+    from coursift.config import list_projects
+    pairs = detect_all(list_projects())
+    pairs = [p for p in pairs if p["support"] >= min_support]
+    if not pairs:
+        rprint("[yellow]No strong co-change coupling found.[/yellow]")
+        return
+    rprint(f"\n[bold]{len(pairs)} co-change pair(s) — edit one, check the other:[/bold]\n")
+    for p in pairs[:25]:
+        from pathlib import Path as _P
+        a, b = _P(p["file_a"]).name, _P(p["file_b"]).name
+        rprint(f"  [cyan]{p['project']}[/cyan] · {a} ↔ {b} "
+               f"[dim](together {p['support']}x, confidence {p['confidence']})[/dim]")
+
+
+@app.command(name="secrets")
+def secrets_scan():
+    """Scan indexed memory for leaked credentials (anti data-exfiltration)."""
+    from coursift.security import detect_secrets
+    from coursift.graph import load_graph
+    graph = load_graph()
+    if not graph:
+        rprint("[yellow]No graph. Run `coursift build` first.[/yellow]")
+        return
+    flagged = []
+    for n in graph.get("nodes", []):
+        blob = " ".join([
+            n.get("label", ""), n.get("context", ""),
+            " ".join(n.get("decisions", []) or []),
+        ])
+        s = detect_secrets(blob)
+        if s:
+            flagged.append((n.get("project", "?"), n.get("kind"), s))
+    if not flagged:
+        rprint("[green]✓ No leaked secrets in indexed memory.[/green]")
+        return
+    rprint(f"[red]⚠ {len(flagged)} memory node(s) contain credential patterns:[/red]")
+    for proj, kind, labels in flagged[:20]:
+        rprint(f"  [{kind}] {proj} — {', '.join(labels)}")
+    rprint("\n[yellow]Coursift redacts these on write, but rotate any real ones.[/yellow]")
 
 
 @app.callback(invoke_without_command=True)

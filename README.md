@@ -53,6 +53,21 @@ AI coding tools in 2026 share a well-documented set of failures. Coursift attack
 
 ---
 
+## Frontier features — things no other personal tool does yet
+
+These target *open* problems flagged in 2026 research as still unsolved:
+
+| Capability | The unsolved problem it attacks | Command |
+|---|---|---|
+| **Failure memory** | Agents repeat approaches that already failed ("hallucination loops"). Research: extract lessons *from failures*. Coursift mines **your own Claude session logs** for errors, reverts, and corrections. | `coursift lessons` |
+| **Blast radius** | "Agents start from zero and modify components without checking what depends on them." Coursift walks reverse edges to show transitive dependents — **across projects** — before you change anything. | `coursift impact <symbol>` |
+| **Temporal coupling** | Files that always change together but have no import between them — invisible to static analysis. Mined from git history. | `coursift coupling` |
+| **Secret-leak defense** | Conversation memory captures pasted credentials (data-exfiltration surface). Coursift detects & **redacts secrets on write**, and scans existing memory. | `coursift secrets` |
+
+> The OSS "agent memory race" of 2026 concluded the one missing system is one that does **both** a codebase-aware graph *and* conversation memory "without a compiler toolchain." That is exactly what Coursift is — pure-Python, local, no toolchain.
+
+---
+
 ## Why not Graphify?
 
 | | [Graphify](https://github.com/safishamsi/graphify) | **Coursift** |
@@ -67,6 +82,10 @@ AI coding tools in 2026 share a well-documented set of failures. Coursift attack
 | Doc-drift detection | ✗ | ✓ (`drift`) |
 | Selective forgetting | ✗ | ✓ (`forget` + decay) |
 | Token-budgeted context packs | ✗ | ✓ (`context`) |
+| Failure memory (negative knowledge) | ✗ | ✓ (`lessons`) |
+| Blast-radius / change impact | ✗ | ✓ (`impact`) |
+| Temporal coupling (git co-change) | ✗ | ✓ (`coupling`) |
+| Secret-leak detection + redaction | ✗ | ✓ (`secrets`) |
 | Skill install | Per-project | Global (every session) |
 | PyPI name | `graphifyy` (taken) | `coursift` (clean) |
 
@@ -112,6 +131,10 @@ coursift install
 | `coursift drift --days 30` | Documentation drift detector |
 | `coursift audit` | Memory-poisoning / injection scan |
 | `coursift forget 90d` | Prune stale memory (selective forgetting) |
+| `coursift lessons` | Failure memory mined from your sessions |
+| `coursift impact <symbol>` | Blast radius — what depends on this |
+| `coursift coupling` | Files that change together (git) |
+| `coursift secrets` | Scan memory for leaked credentials |
 | `coursift sessions` | Browse extracted Claude session decisions |
 | `coursift open` | Open the interactive HTML graph |
 | `coursift status` | Show graph stats |

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "coursift"
-version = "0.2.0"
+version = "0.3.0"
 description = "A cross-project knowledge graph and memory layer for Claude Code — maps code, conversations, and decisions across all your projects."
 readme = "README.md"
 license = { text = "MIT" }

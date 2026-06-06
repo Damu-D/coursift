@@ -35,6 +35,40 @@ INJECTION_PATTERNS = [
 _COMPILED = [re.compile(p, re.IGNORECASE) for p in INJECTION_PATTERNS]
 
 
+# Secret patterns — agent memory frequently captures pasted credentials.
+# Data exfiltration is one of the 5 agent attack surfaces (OWASP, 2026).
+SECRET_PATTERNS = [
+    (r"github_pat_[A-Za-z0-9_]{20,}", "GitHub PAT"),
+    (r"ghp_[A-Za-z0-9]{36,}", "GitHub token"),
+    (r"gho_[A-Za-z0-9]{36,}", "GitHub OAuth token"),
+    (r"sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}", "API secret key"),
+    (r"AKIA[0-9A-Z]{16}", "AWS access key"),
+    (r"AIza[0-9A-Za-z_-]{35}", "Google API key"),
+    (r"xox[baprs]-[0-9A-Za-z-]{10,}", "Slack token"),
+    (r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", "Private key"),
+    (r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", "JWT"),
+    (r"postgres(?:ql)?://[^\s:]+:[^\s@]+@", "Postgres URL with password"),
+]
+_SECRET_RE = [(re.compile(p), label) for p, label in SECRET_PATTERNS]
+
+
+def detect_secrets(text: str) -> list[str]:
+    """Return labels of any secrets found (never the secret itself)."""
+    found = []
+    for rx, label in _SECRET_RE:
+        if rx.search(text):
+            found.append(label)
+    return found
+
+
+def redact_secrets(text: str) -> str:
+    """Replace any detected secret with a [REDACTED:label] marker."""
+    out = text
+    for rx, label in _SECRET_RE:
+        out = rx.sub(f"[REDACTED:{label}]", out)
+    return out
+
+
 def _has_hidden_unicode(text: str) -> bool:
     """Detect zero-width / bidi-control chars used to hide injected instructions."""
     suspicious = {
@@ -57,6 +91,10 @@ def scan_text(text: str) -> dict:
     if hidden:
         findings.append("hidden-unicode-control-chars")
 
+    secrets = detect_secrets(text)
+    for label in secrets:
+        findings.append(f"secret:{label}")
+
     # trust score: 1.0 clean -> lower as findings accumulate
     trust = max(0.0, 1.0 - 0.34 * len(findings))
     level = "clean" if trust >= 0.9 else "suspect" if trust >= 0.5 else "poisoned"
@@ -66,16 +104,17 @@ def scan_text(text: str) -> dict:
         "level": level,
         "findings": findings[:10],
         "has_hidden_unicode": hidden,
+        "secrets": secrets,
     }
 
 
 def sanitize_for_memory(text: str) -> str:
-    """Strip hidden control chars before text enters the graph as memory."""
+    """Strip hidden control chars AND redact secrets before text becomes memory."""
     cleaned = "".join(
         ch for ch in text
         if not (unicodedata.category(ch) in ("Cf",) or ch in "‪‫‬‭‮")
     )
-    return cleaned
+    return redact_secrets(cleaned)
 
 
 def audit_graph(graph: dict) -> dict:
@@ -84,11 +123,12 @@ def audit_graph(graph: dict) -> dict:
     flagged = []
     scanned = 0
     for n in nodes:
-        if n.get("kind") not in ("session", "concept"):
+        if n.get("kind") not in ("session", "concept", "lesson"):
             continue
         scanned += 1
         blob = " ".join([
             n.get("label", ""),
+            n.get("context", ""),
             " ".join(n.get("decisions", []) or []),
             " ".join(n.get("concepts", []) or []),
         ])
