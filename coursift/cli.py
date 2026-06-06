@@ -182,12 +182,39 @@ def sessions():
 
 
 @app.command()
-def install():
-    """Install the Coursift skill into Claude Code (runs in every session)."""
-    from coursift.skill import install_skill
-    path = install_skill()
-    rprint(f"[green]✓[/green] Skill installed: [bold]{path}[/bold]")
-    rprint("  Claude Code will now use the knowledge graph in every session.")
+def install(
+    platform: str = typer.Option(
+        "claude", "--platform", "-p",
+        help="claude | cursor | copilot | gemini | windsurf | cline | codex | "
+             "opencode | zed | aider | agents | all",
+    ),
+    project: str = typer.Option(".", "--project", help="Project root for project-scoped files"),
+    user: bool = typer.Option(False, "--user", help="Claude only: install to ~/.claude (global)"),
+):
+    """Install Coursift instructions for one or all AI platforms."""
+    from coursift.platforms import install_platform, list_platforms
+
+    if platform == "claude" and user:
+        from coursift.skill import install_skill
+        path = install_skill()
+        rprint(f"[green]✓[/green] Claude Code skill installed globally: [bold]{path}[/bold]")
+        rprint("\n[bold]Next:[/bold] Run [cyan]coursift build[/cyan] to build your graph.")
+        return
+
+    try:
+        written = install_platform(platform, project)
+    except ValueError as e:
+        rprint(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    labels = list_platforms()
+    if platform == "all":
+        rprint(f"[green]✓[/green] Installed Coursift for [bold]all platforms[/bold] "
+               f"({len(written)} files):")
+    else:
+        rprint(f"[green]✓[/green] Installed for [bold]{labels.get(platform, platform)}[/bold]:")
+    for p in written:
+        rprint(f"  [dim]{p}[/dim]")
     rprint("\n[bold]Next:[/bold] Run [cyan]coursift build[/cyan] to build your graph.")
 
 

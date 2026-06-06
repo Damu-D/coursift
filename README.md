@@ -95,31 +95,22 @@ Implements 2026→2027 frontier research (ReMe, ReasoningBank, Policy-as-Prompt,
 
 ---
 
-## Why not Graphify?
+## How it's different
 
-| | [Graphify](https://github.com/safishamsi/graphify) | **Coursift** |
-|---|---|---|
-| Scope | One folder at a time | All registered projects |
-| Claude session history | ✗ | ✓ |
-| Cross-project detection | ✗ | ✓ |
-| Why code was written | ✗ | ✓ (from your sessions) |
-| Anti-hallucination grounding | ✗ | ✓ (`verify`) |
-| Slopsquat / dependency audit | ✗ | ✓ (`deps`) |
-| Memory-poisoning scan | ✗ | ✓ (`audit` + trust scores) |
-| Doc-drift detection | ✗ | ✓ (`drift`) |
-| Selective forgetting | ✗ | ✓ (`forget` + decay) |
-| Token-budgeted context packs | ✗ | ✓ (`context`) |
-| Failure memory (negative knowledge) | ✗ | ✓ (`lessons`) |
-| Blast-radius / change impact | ✗ | ✓ (`impact`) |
-| Temporal coupling (git co-change) | ✗ | ✓ (`coupling`) |
-| Secret-leak detection + redaction | ✗ | ✓ (`secrets`) |
-| Self-evolving memory consolidation | ✗ | ✓ (`consolidate`) |
-| Auto-generated learned guardrails | ✗ | ✓ (`constitution`) |
-| Proactive preflight briefing | ✗ | ✓ (`preflight`) |
-| Cross-project clone detection | ✗ | ✓ (`duplicates`) |
-| Live MCP tool server | Afterthought | ✓ first-class (`serve`) |
-| Skill install | Per-project | Global (every session) |
-| PyPI name | `graphifyy` (taken) | `coursift` (clean) |
+Most code-graph tools map a **single repository's code**. Coursift goes wider and deeper: it spans **all your projects at once**, remembers **why** code exists by reading your past AI sessions, and adds a grounding + safety + self-evolving-memory layer on top. If you've seen tools like Graphify, think of Coursift as that idea taken several steps further — but it stands on its own.
+
+---
+
+## Works with every AI coding agent
+
+Coursift installs instructions in the formats each tool reads — so whatever you use, it knows how to query the graph:
+
+```bash
+coursift install --platform all       # write configs for every platform
+coursift install --platform cursor    # or just one
+```
+
+Supported: **Claude Code, Cursor, GitHub Copilot, Codex, Gemini CLI, Windsurf, Cline, OpenCode, Zed, Aider** — plus the universal **`AGENTS.md`** standard that 20+ other agents read natively.
 
 ---
 
