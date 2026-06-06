@@ -48,6 +48,7 @@ class Node:
     line: int = 0
     docstring: str = ""
     tags: list[str] = field(default_factory=list)
+    tokens: list[str] = field(default_factory=list)  # body identifier tokens (clone detection)
 
 
 @dataclass
@@ -60,6 +61,23 @@ class Edge:
 def _node_id(project: str, file: str, name: str) -> str:
     raw = f"{project}::{file}::{name}"
     return hashlib.md5(raw.encode()).hexdigest()[:12]
+
+
+def _body_tokens(node, cap: int = 40) -> list[str]:
+    """Identifier tokens used inside a function/class body (for clone detection)."""
+    toks: set[str] = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.Name):
+            toks.add(child.id)
+        elif isinstance(child, ast.Attribute):
+            toks.add(child.attr)
+        elif isinstance(child, ast.arg):
+            toks.add(child.arg)
+        elif isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+            toks.add(child.func.id)
+    # drop trivial 1-char names; keep deterministic order
+    cleaned = sorted(t for t in toks if len(t) > 1)
+    return cleaned[:cap]
 
 
 def _scan_python(path: Path, project: str) -> tuple[list[Node], list[Edge]]:
@@ -81,6 +99,7 @@ def _scan_python(path: Path, project: str) -> tuple[list[Node], list[Edge]]:
             nodes.append(Node(
                 id=nid, label=node.name, kind="function",
                 project=project, file=rel, line=node.lineno, docstring=doc[:200],
+                tokens=_body_tokens(node),
             ))
             edges.append(Edge(source=file_id, target=nid, relation="defines"))
 
@@ -90,6 +109,7 @@ def _scan_python(path: Path, project: str) -> tuple[list[Node], list[Edge]]:
             nodes.append(Node(
                 id=nid, label=node.name, kind="class",
                 project=project, file=rel, line=node.lineno, docstring=doc[:200],
+                tokens=_body_tokens(node),
             ))
             edges.append(Edge(source=file_id, target=nid, relation="defines"))
 
@@ -139,7 +159,10 @@ def _scan_ts_js(path: Path, project: str) -> tuple[list[Node], list[Edge]]:
         if name:
             nid = _node_id(project, rel, name)
             line = source[: m.start()].count("\n") + 1
-            nodes.append(Node(id=nid, label=name, kind="function", project=project, file=rel, line=line))
+            body = source[m.start(): m.start() + 600]
+            toks = sorted({t for t in re.findall(r"[A-Za-z_]\w+", body) if len(t) > 1})[:40]
+            nodes.append(Node(id=nid, label=name, kind="function", project=project,
+                              file=rel, line=line, tokens=toks))
             edges.append(Edge(source=file_id, target=nid, relation="defines"))
 
     for m in _TS_CLASS.finditer(source):

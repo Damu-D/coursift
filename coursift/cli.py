@@ -423,6 +423,128 @@ def secrets_scan():
     rprint("\n[yellow]Coursift redacts these on write, but rotate any real ones.[/yellow]")
 
 
+@app.command()
+def duplicates(
+    threshold: float = typer.Option(0.6, "--threshold", "-t", help="Similarity 0-1"),
+    cross_only: bool = typer.Option(False, "--cross-only", help="Only cross-project"),
+):
+    """Find near-duplicate functions across projects (extraction candidates)."""
+    from coursift.duplicates import find_duplicates, summarize
+    results = find_duplicates(threshold=threshold, cross_project_only=cross_only)
+    if not results:
+        rprint("[green]No significant duplicates found.[/green]")
+        return
+    s = summarize(results)
+    rprint(f"\n[bold]{s['total']} duplicate pair(s)[/bold] "
+           f"([yellow]{s['cross_project']} cross-project[/yellow]):\n")
+    for r in results[:20]:
+        tag = "[yellow]⬡ cross-project[/yellow]" if r["cross_project"] else "[dim]same project[/dim]"
+        a, b = r["a"], r["b"]
+        rprint(f"  {r['similarity']:.0%} {tag}")
+        rprint(f"    {a['label']} [dim]({a['project']} · {Path(a['file']).name}:{a['line']})[/dim]")
+        rprint(f"    {b['label']} [dim]({b['project']} · {Path(b['file']).name}:{b['line']})[/dim]")
+
+
+@app.command()
+def consolidate(
+    keep_trivial: bool = typer.Option(False, "--keep-trivial", help="Don't prune trivia"),
+):
+    """Consolidate memory: distill lessons → insights, dedupe, prune (the 'sleep cycle')."""
+    from coursift.consolidate import consolidate as run_consolidate
+    r = run_consolidate(prune_trivial=not keep_trivial)
+    if r["status"] != "ok":
+        rprint(f"[yellow]{r['status']}[/yellow]")
+        return
+    rprint(f"[green]✓ Consolidated.[/green] "
+           f"{r['insights_created']} insight(s) distilled · "
+           f"{r['concepts_merged']} concept(s) merged · "
+           f"{r['trivia_pruned']} trivia pruned")
+    for ins in r["insights"][:10]:
+        rprint(f"  💡 [cyan]{ins['project']}[/cyan] — {ins['insight']} [dim](evidence: {ins['evidence']})[/dim]")
+
+
+@app.command()
+def constitution():
+    """Generate a learned agent constitution (rules distilled from failures)."""
+    from coursift.constitution import write_constitution
+    path = write_constitution()
+    rprint(f"[green]✓[/green] Constitution written: [bold]{path}[/bold]\n")
+    console.print(path.read_text(), markup=False, highlight=False)
+
+
+@app.command()
+def preflight(
+    project: str = typer.Argument(".", help="Project path (default: current dir)"),
+):
+    """Proactive briefing from your current git changes (blast radius + coupling + lessons)."""
+    from coursift.preflight import preflight as run_preflight
+    r = run_preflight(project)
+    if r["status"] == "clean":
+        rprint(f"[green]{r['message']}[/green]")
+        return
+    if r["status"] != "ok":
+        rprint(f"[yellow]{r['status']}[/yellow]")
+        return
+    rprint(f"\n[bold cyan]Preflight briefing — {r['project']}[/bold cyan]")
+    rprint(f"  Changed: {', '.join(Path(c).name for c in r['changed_files'][:8])}")
+    if r["blast_radius"]:
+        rprint("\n  [yellow]⚠ Blast radius (these depend on what you're changing):[/yellow]")
+        for label, proj, fname in r["blast_radius"][:10]:
+            rprint(f"    {label} [dim]({proj} · {fname})[/dim]")
+    if r["also_edit"]:
+        rprint("\n  [magenta]↔ Historically changed together — consider editing too:[/magenta]")
+        for fname, sup, conf in r["also_edit"]:
+            rprint(f"    {fname} [dim](together {sup}×, conf {conf})[/dim]")
+    if r["relevant_lessons"]:
+        rprint("\n  [red]💥 Past failures near here:[/red]")
+        for kind, signal, ctx in r["relevant_lessons"]:
+            rprint(f"    ({kind}) {signal} — [dim]{ctx}[/dim]")
+    if r["decisions"]:
+        rprint("\n  [green]📌 Established decisions:[/green]")
+        for d in r["decisions"]:
+            rprint(f"    {d}")
+
+
+@app.command()
+def search(
+    query: str = typer.Argument(..., help="Semantic search across all code"),
+    top: int = typer.Option(10, "--top", "-k", help="Number of results"),
+):
+    """Semantic code search across all projects (local TF-IDF, no API)."""
+    from coursift.embed import TfidfIndex
+    from coursift.graph import load_graph
+    graph = load_graph()
+    if not graph:
+        rprint("[yellow]No graph. Run `coursift build` first.[/yellow]")
+        return
+    idx = TfidfIndex()
+    nodemap = {}
+    for n in graph.get("nodes", []):
+        if n.get("kind") in ("function", "class", "file"):
+            text = " ".join([n.get("label", ""), n.get("docstring", ""),
+                             " ".join(n.get("tokens", []))])
+            idx.add(n["id"], text)
+            nodemap[n["id"]] = n
+    idx.build()
+    hits = idx.search(query, top_k=top)
+    if not hits:
+        rprint("[yellow]No matches.[/yellow]")
+        return
+    rprint(f"\n[bold]Semantic matches for '{query}':[/bold]\n")
+    for nid, score in hits:
+        n = nodemap[nid]
+        rprint(f"  {score:.2f} [{n.get('kind')}] [cyan]{n.get('label')}[/cyan] "
+               f"[dim]({n.get('project')} · {Path(n.get('file','')).name}:{n.get('line',0)})[/dim]")
+
+
+@app.command()
+def serve():
+    """Start the Coursift MCP server (exposes graph tools to any agent)."""
+    rprint("[cyan]Starting Coursift MCP server (stdio)...[/cyan]")
+    from coursift.serve import main as serve_main
+    serve_main()
+
+
 @app.callback(invoke_without_command=True)
 def version_check(
     ctx: typer.Context,

@@ -68,6 +68,23 @@ These target *open* problems flagged in 2026 research as still unsolved:
 
 ---
 
+## Self-evolving layer (v0.4) — memory that gets *wiser*, not just bigger
+
+Implements 2026→2027 frontier research (ReMe, ReasoningBank, Policy-as-Prompt, proactive agents):
+
+| Capability | Frontier idea it implements | Command |
+|---|---|---|
+| **Memory consolidation** | ReMe's "sleep cycle": distill raw failures into higher-order **insights**, dedupe concepts, prune trivia — the graph gets wiser over time. | `coursift consolidate` |
+| **Learned constitution** | ReasoningBank + Policy-as-Prompt: auto-write a `CONSTITUTION.md` of guardrails **distilled from your real failures**, per project. | `coursift constitution` |
+| **Proactive preflight** | "Agents act on cues, not prompts": from your current git diff, brief the agent on blast radius + coupled files + past failures **before** it codes. | `coursift preflight` |
+| **Semantic code search** | Hybrid GraphRAG: local TF-IDF + graph, no API, no embeddings server. | `coursift search` |
+| **Cross-project clone detection** | Embedding-style duplicate detection across repos — find logic to extract into a shared package. | `coursift duplicates` |
+| **Live MCP tools** | Expose `context`/`verify`/`impact`/`lessons`/`preflight`/`duplicates` as MCP tools any agent calls mid-session. | `coursift serve` |
+
+> Everything is **pure-Python and local** — no numpy, no torch, no embeddings API. The semantic engine is a hand-rolled TF-IDF + Jaccard index that runs offline on any machine.
+
+---
+
 ## Why not Graphify?
 
 | | [Graphify](https://github.com/safishamsi/graphify) | **Coursift** |
@@ -86,6 +103,11 @@ These target *open* problems flagged in 2026 research as still unsolved:
 | Blast-radius / change impact | ✗ | ✓ (`impact`) |
 | Temporal coupling (git co-change) | ✗ | ✓ (`coupling`) |
 | Secret-leak detection + redaction | ✗ | ✓ (`secrets`) |
+| Self-evolving memory consolidation | ✗ | ✓ (`consolidate`) |
+| Auto-generated learned guardrails | ✗ | ✓ (`constitution`) |
+| Proactive preflight briefing | ✗ | ✓ (`preflight`) |
+| Cross-project clone detection | ✗ | ✓ (`duplicates`) |
+| Live MCP tool server | Afterthought | ✓ first-class (`serve`) |
 | Skill install | Per-project | Global (every session) |
 | PyPI name | `graphifyy` (taken) | `coursift` (clean) |
 
@@ -135,6 +157,12 @@ coursift install
 | `coursift impact <symbol>` | Blast radius — what depends on this |
 | `coursift coupling` | Files that change together (git) |
 | `coursift secrets` | Scan memory for leaked credentials |
+| `coursift search "<q>"` | Semantic code search (local, no API) |
+| `coursift duplicates` | Cross-project clone detection |
+| `coursift consolidate` | Distill failures → insights ("sleep cycle") |
+| `coursift constitution` | Auto-generate learned guardrails |
+| `coursift preflight [path]` | Proactive briefing from your git diff |
+| `coursift serve` | Start MCP server (live agent tools) |
 | `coursift sessions` | Browse extracted Claude session decisions |
 | `coursift open` | Open the interactive HTML graph |
 | `coursift status` | Show graph stats |
