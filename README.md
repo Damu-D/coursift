@@ -34,6 +34,25 @@ You get:
 
 ---
 
+## The 2026 AI problems Coursift is built to solve
+
+AI coding tools in 2026 share a well-documented set of failures. Coursift attacks each one with a concrete, **local-first** command — no token-burning, no black box.
+
+| 2026 problem | What goes wrong | Coursift's answer |
+|---|---|---|
+| **Context rot** | Agents degrade after ~1h as the window fills with noise; forget signatures they wrote | `coursift context` — token-budgeted, relevance-ranked grounded subgraph instead of whole files |
+| **Hallucinated APIs** | Models invent functions/methods that don't exist | `coursift verify <symbol>` — confirms a symbol is real or returns closest matches |
+| **Slopsquatting** | ~20% of AI code imports packages that don't exist; attackers pre-register them as malware | `coursift deps` — flags unverified third-party imports for review |
+| **Lost in the middle / cost** | Big context windows bury key facts and cost a fortune | Token-budgeted context packs (GraphRAG-style anchor + 1-hop neighbors) |
+| **Memory poisoning** | Injected instructions persist in agent memory (MINJA: >95% success) | `coursift audit` + provenance & trust scoring on every memory node |
+| **Doc drift** | Code changes, docs don't → agents code from stale specs | `coursift drift` — flags code-changed-but-docs-didn't via git |
+| **Selective forgetting** | Memory systems bloat; "most fail at forgetting" | `coursift forget 90d` + recency decay weighting |
+| **No codebase awareness** | #1 developer ask; single-file assistants are obsolete | Unified multi-project graph + session memory |
+
+> GraphRAG-style grounding (knowledge graph → retrieval) is the 2026 standard and cuts hallucination **40–62%**. Coursift brings it to your whole workspace, locally.
+
+---
+
 ## Why not Graphify?
 
 | | [Graphify](https://github.com/safishamsi/graphify) | **Coursift** |
@@ -42,6 +61,12 @@ You get:
 | Claude session history | ✗ | ✓ |
 | Cross-project detection | ✗ | ✓ |
 | Why code was written | ✗ | ✓ (from your sessions) |
+| Anti-hallucination grounding | ✗ | ✓ (`verify`) |
+| Slopsquat / dependency audit | ✗ | ✓ (`deps`) |
+| Memory-poisoning scan | ✗ | ✓ (`audit` + trust scores) |
+| Doc-drift detection | ✗ | ✓ (`drift`) |
+| Selective forgetting | ✗ | ✓ (`forget` + decay) |
+| Token-budgeted context packs | ✗ | ✓ (`context`) |
 | Skill install | Per-project | Global (every session) |
 | PyPI name | `graphifyy` (taken) | `coursift` (clean) |
 
@@ -80,7 +105,13 @@ coursift install
 | `coursift remove <path>` | Unregister a project |
 | `coursift list` | List registered projects |
 | `coursift build` | Build the unified graph |
-| `coursift query "<question>"` | Ask a question about the graph |
+| `coursift query "<question>"` | Ask a question (LLM, uses the graph) |
+| `coursift context "<q>" -t 2000` | Token-budgeted grounded context pack (local) |
+| `coursift verify <symbol>` | Anti-hallucination: does this symbol exist? |
+| `coursift deps` | Dependency / slopsquat audit |
+| `coursift drift --days 30` | Documentation drift detector |
+| `coursift audit` | Memory-poisoning / injection scan |
+| `coursift forget 90d` | Prune stale memory (selective forgetting) |
 | `coursift sessions` | Browse extracted Claude session decisions |
 | `coursift open` | Open the interactive HTML graph |
 | `coursift status` | Show graph stats |

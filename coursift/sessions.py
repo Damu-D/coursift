@@ -149,19 +149,32 @@ def index_sessions(registered_projects: list[str] | None = None) -> list[Session
 
 
 def sessions_to_nodes_edges(entries: list[SessionEntry]) -> tuple[list[dict], list[dict]]:
-    """Convert session entries into graph nodes and edges."""
+    """
+    Convert session entries into graph nodes and edges.
+    Each memory node carries provenance (source + timestamp) and a trust score
+    from injection scanning — OWASP-recommended for poison-resistant memory.
+    """
+    from coursift.security import scan_text, sanitize_for_memory
+
     nodes, edges = [], []
 
     for entry in entries:
         session_node_id = f"session::{entry.session_id[:8]}"
+        clean_decisions = [sanitize_for_memory(d) for d in entry.decisions[:5]]
+        scan = scan_text(" ".join(clean_decisions + entry.concepts[:10]))
         nodes.append({
             "id": session_node_id,
             "label": f"Session ({entry.project_name})",
             "kind": "session",
             "project": entry.project_name,
             "file": entry.project_path,
-            "decisions": entry.decisions[:5],
+            "decisions": clean_decisions,
             "concepts": entry.concepts[:10],
+            # provenance + trust (anti memory-poisoning)
+            "provenance": entry.session_id,
+            "timestamp": entry.timestamp,
+            "trust": scan["trust"],
+            "trust_level": scan["level"],
         })
 
         for concept in entry.concepts:

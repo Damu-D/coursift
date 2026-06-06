@@ -93,6 +93,10 @@ def build_graph(
             "projects": list({n.get("project", "") for n in nodes_dict.values() if n.get("project")}),
         },
     }
+
+    # Apply recency decay so fresh memory outranks stale memory (anti context-rot)
+    from coursift.forget import apply_decay
+    graph = apply_decay(graph)
     return graph
 
 

@@ -217,6 +217,103 @@ def open_viz():
     rprint(f"[green]✓[/green] Opened: [bold]{html}[/bold]")
 
 
+@app.command()
+def context(
+    question: str = typer.Argument(..., help="What you need context for"),
+    max_tokens: int = typer.Option(2000, "--max-tokens", "-t", help="Token budget"),
+):
+    """Build a token-budgeted, grounded context pack (anti context-rot, anti-cost)."""
+    from coursift.context_pack import build_context_pack
+    pack = build_context_pack(question, max_tokens=max_tokens)
+    print(pack)
+
+
+@app.command()
+def verify(symbol: str = typer.Argument(..., help="Function/class/file to verify exists")):
+    """Check if a symbol really exists (anti-hallucination grounding)."""
+    from coursift.verify import verify_symbol
+    r = verify_symbol(symbol)
+    if r["status"] == "found":
+        rprint(f"[green]✓ '{r['symbol']}' exists[/green] ({len(r['matches'])} match(es)):")
+        for m in r["matches"]:
+            doc = f" — {m['doc'][:80]}" if m.get("doc") else ""
+            rprint(f"  [{m['kind']}] {m['project']} · {m['file']}:{m['line']}{doc}")
+    elif r["status"] == "not_found":
+        rprint(f"[red]✗ '{r['symbol']}' does NOT exist in any indexed project.[/red]")
+        rprint(f"  [yellow]{r['warning']}[/yellow]")
+        if r["suggestions"]:
+            rprint("\n  Closest real matches:")
+            for s in r["suggestions"]:
+                rprint(f"    {s['label']} [{s['kind']}] ({s['project']}) ~{s['similarity']}")
+    else:
+        rprint(f"[yellow]{r.get('message', r['status'])}[/yellow]")
+
+
+@app.command()
+def deps():
+    """Audit third-party dependencies & flag slopsquat/supply-chain risk."""
+    from coursift.deps import audit_dependencies
+    r = audit_dependencies()
+    if r["status"] != "ok":
+        rprint(f"[yellow]{r.get('message', r['status'])}[/yellow]")
+        return
+    for project, data in r["projects"].items():
+        rprint(f"\n[bold cyan]{project}[/bold cyan]")
+        rprint(f"  third-party: {', '.join(data['third_party']) or '(none)'}")
+        rprint(f"  stdlib: {data['stdlib_count']} · local imports: {data['local_imports']}")
+        if data["unverified"]:
+            rprint(f"  [yellow]unverified ({len(data['unverified'])}):[/yellow] {', '.join(data['unverified'][:20])}")
+    rprint(f"\n[dim]{r['note']}[/dim]")
+
+
+@app.command()
+def drift(days: int = typer.Option(30, "--days", "-d", help="Look-back window")):
+    """Detect documentation drift — code changed but docs didn't (anti stale-spec)."""
+    from coursift.drift import detect_all
+    from coursift.config import list_projects
+    results = detect_all(list_projects(), days=days)
+    if not results:
+        rprint("[yellow]No projects to check.[/yellow]")
+        return
+    for r in results:
+        if r["status"] == "drift":
+            rprint(f"[red]⚠ {r['project']}[/red] — {r['message']}")
+            for f in r.get("sample_code", [])[:5]:
+                rprint(f"    [dim]{f}[/dim]")
+        elif r["status"] == "ok":
+            rprint(f"[green]✓ {r['project']}[/green] — {r['message']}")
+        else:
+            rprint(f"[dim]· {r['project']} — {r['status']}[/dim]")
+
+
+@app.command()
+def audit():
+    """Scan memory for prompt-injection / poisoning (anti memory-poisoning)."""
+    from coursift.security import audit_graph
+    from coursift.graph import load_graph
+    graph = load_graph()
+    if not graph:
+        rprint("[yellow]No graph. Run `coursift build` first.[/yellow]")
+        return
+    r = audit_graph(graph)
+    color = "green" if r["status"] == "clean" else "red"
+    rprint(f"[{color}]{r['summary']}[/{color}]")
+    for f in r["flagged"]:
+        rprint(f"  [red]⚠[/red] {f['node']} ({f['project']}) — trust={f['trust']} · {', '.join(f['findings'][:3])}")
+
+
+@app.command()
+def forget(older_than: str = typer.Argument(..., help="Age e.g. 90d, 4w, 12h")):
+    """Prune stale memory older than a given age (selective forgetting)."""
+    from coursift.forget import forget_older_than
+    r = forget_older_than(older_than)
+    if r["status"] == "ok":
+        rprint(f"[green]✓[/green] Removed {r['removed']} stale node(s) older than {r['older_than']}. "
+               f"{r['remaining']} remain.")
+    else:
+        rprint(f"[yellow]{r['status']}[/yellow]")
+
+
 @app.callback(invoke_without_command=True)
 def version_check(
     ctx: typer.Context,
