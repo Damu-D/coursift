@@ -538,6 +538,62 @@ def search(
 
 
 @app.command()
+def cost():
+    """Token spend attribution across projects (from session telemetry)."""
+    from coursift.cost import analyze_cost
+    r = analyze_cost()
+    if r["status"] != "ok":
+        rprint(f"[yellow]{r['status']}[/yellow]")
+        return
+    rprint(f"\n[bold]Estimated total spend: [green]${r['total_cost']}[/green][/bold]\n")
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Project", style="cyan")
+    table.add_column("Cost", justify="right")
+    table.add_column("In", justify="right")
+    table.add_column("Out", justify="right")
+    table.add_column("Cache rd", justify="right")
+    table.add_column("Msgs", justify="right")
+    for proj, d in r["by_project"].items():
+        table.add_row(proj, f"${d['cost']}", f"{d['input']:,}", f"{d['output']:,}",
+                      f"{d['cache_read']:,}", str(d["messages"]))
+    console.print(table)
+    rprint("\n  By model: " + " · ".join(f"{m.split('-')[1] if '-' in m else m}=${c}"
+                                          for m, c in r["by_model"].items() if c > 0))
+    rprint(f"  [dim]{r['note']}[/dim]")
+
+
+@app.command()
+def onboard(project: str = typer.Argument(..., help="Project name to generate a tour for")):
+    """Generate an onboarding guide / codebase tour for a project."""
+    from coursift.onboard import write_onboarding
+    path = write_onboarding(project)
+    rprint(f"[green]✓[/green] Onboarding guide: [bold]{path}[/bold]\n")
+    console.print(path.read_text(), markup=False, highlight=False)
+
+
+@app.command()
+def health():
+    """Health & tech-debt score per project (synthesizes the whole graph)."""
+    from coursift.health import health_report
+    r = health_report()
+    if r["status"] != "ok":
+        rprint(f"[yellow]{r['status']}[/yellow]")
+        return
+    rprint("\n[bold cyan]Project Health[/bold cyan]\n")
+    if not r["projects"]:
+        rprint("  [yellow]No code-scanned projects. Run `coursift add <path>` then `build`.[/yellow]")
+    for p in r["projects"]:
+        color = "green" if p["score"] >= 70 else "yellow" if p["score"] >= 55 else "red"
+        rprint(f"  [{color}]{p['score']:.0f}/100[/{color}] [bold]{p['project']}[/bold] "
+               f"— {p['grade']} [dim]({p['files']} files, {p['functions']} symbols)[/dim]")
+        for reason, pts in p["deductions"]:
+            rprint(f"      [dim]−{pts}[/dim] {reason}")
+    if r.get("session_only"):
+        rprint(f"\n  [dim]Session-only (not code-scanned, run `coursift add`): "
+               f"{', '.join(r['session_only'])}[/dim]")
+
+
+@app.command()
 def serve():
     """Start the Coursift MCP server (exposes graph tools to any agent)."""
     rprint("[cyan]Starting Coursift MCP server (stdio)...[/cyan]")

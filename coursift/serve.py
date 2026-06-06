@@ -74,6 +74,31 @@ def _build_server():
         from coursift.duplicates import find_duplicates, summarize
         return json.dumps(summarize(find_duplicates(threshold=threshold)), indent=2)
 
+    @mcp.tool()
+    def coursift_search(query: str, top_k: int = 10) -> str:
+        """Semantic code search across all projects (local TF-IDF)."""
+        from coursift.embed import TfidfIndex
+        from coursift.graph import load_graph
+        graph = load_graph() or {"nodes": []}
+        idx, nm = TfidfIndex(), {}
+        for n in graph["nodes"]:
+            if n.get("kind") in ("function", "class", "file"):
+                idx.add(n["id"], " ".join([n.get("label", ""), n.get("docstring", ""),
+                                           " ".join(n.get("tokens", []))]))
+                nm[n["id"]] = n
+        idx.build()
+        return json.dumps([
+            {"label": nm[i].get("label"), "project": nm[i].get("project"),
+             "file": nm[i].get("file"), "score": round(s, 3)}
+            for i, s in idx.search(query, top_k=top_k)
+        ], indent=2)
+
+    @mcp.tool()
+    def coursift_health() -> str:
+        """Health & tech-debt score per project."""
+        from coursift.health import health_report
+        return json.dumps(health_report(), indent=2)
+
     return mcp
 
 

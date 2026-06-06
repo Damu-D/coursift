@@ -85,6 +85,16 @@ Implements 2026→2027 frontier research (ReMe, ReasoningBank, Policy-as-Prompt,
 
 ---
 
+## Insight layer (v0.5) — understand, cost, and grade your whole workspace
+
+| Capability | Problem it solves | Command |
+|---|---|---|
+| **Onboarding generator** | Devs spend ~58% of time on comprehension; onboarding takes ~6 weeks. Auto-writes a "start here" tour: stack, entry points, reading order, the *why*. | `coursift onboard <project>` |
+| **Cost observability** | Agents use 5–30× more tokens; only 39% of orgs can attribute spend. Rolls up real token spend per project from session telemetry. | `coursift cost` |
+| **Health & tech-debt score** | Tech debt costs $2.4T/yr; AI error rates rise 2–5× on unhealthy code. One 0–100 score per project from coupling, duplicates, failure density, comprehension debt. | `coursift health` |
+
+---
+
 ## Why not Graphify?
 
 | | [Graphify](https://github.com/safishamsi/graphify) | **Coursift** |
@@ -162,6 +172,9 @@ coursift install
 | `coursift consolidate` | Distill failures → insights ("sleep cycle") |
 | `coursift constitution` | Auto-generate learned guardrails |
 | `coursift preflight [path]` | Proactive briefing from your git diff |
+| `coursift onboard <project>` | Generate a codebase tour / onboarding guide |
+| `coursift cost` | Token spend attribution per project |
+| `coursift health` | Health & tech-debt score per project |
 | `coursift serve` | Start MCP server (live agent tools) |
 | `coursift sessions` | Browse extracted Claude session decisions |
 | `coursift open` | Open the interactive HTML graph |
