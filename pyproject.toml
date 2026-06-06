@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "coursift"
 version = "0.6.0"
-description = "A cross-project knowledge graph and memory layer for Claude Code — maps code, conversations, and decisions across all your projects."
+description = "A cross-project knowledge graph and memory layer for AI coding agents (Claude Code, Cursor, Copilot, Codex, Gemini & more) — maps code, conversations, and decisions across all your projects."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Damu-D", email = "damunk034@gmail.com" }]
