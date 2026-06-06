@@ -1,18 +1,4 @@
-"""
-Dependency audit — anti-slopsquat / supply-chain surface.
-
-Solves (2026 problems):
-  - Slopsquatting: ~20% of AI-generated code imports packages that don't exist;
-    attackers pre-register those names as malware.
-  - CVE reintroduction: models suggest libraries with patched CVEs.
-
-`coursift deps` collects every external import across all projects, separates
-local from third-party, and flags third-party imports that are NOT in the
-known-package allowlist as "unverified — confirm before trusting."
-
-Local heuristics only. It tells you what to double-check; it does not silently
-trust the model.
-"""
+"""Dependency audit: list third-party imports and flag unverified packages for review."""
 
 from collections import defaultdict
 

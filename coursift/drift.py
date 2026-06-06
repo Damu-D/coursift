@@ -1,16 +1,4 @@
-"""
-Documentation drift detector.
-
-Solves (2026 problem):
-  - Doc/spec drift: when implementation changes but docs don't, agents generate
-    code from stale specs. Real teams hit this — outdated context docs caused
-    agents to conflict with recent refactors.
-
-`coursift drift` parses recent git history per project and flags windows where
-code files changed but no docs/specs were updated alongside.
-
-Uses git locally. No API.
-"""
+"""Documentation drift detector: flag code changed without matching doc updates (via git)."""
 
 import subprocess
 from pathlib import Path

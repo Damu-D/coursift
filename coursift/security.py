@@ -1,18 +1,4 @@
-"""
-Memory-poisoning / prompt-injection scanner + provenance trust scoring.
-
-Solves (2026 problems):
-  - Memory poisoning: malicious instructions written into an agent's persistent
-    memory re-emerge on every invocation (MINJA: >95% success; AgentPoison:
-    >80% at <0.1% poison rate).
-  - Indirect prompt injection via poisoned data sources.
-
-Before any session/doc text becomes "memory" the agent trusts, Coursift scans
-it for injection markers, assigns a trust score, and tags provenance.
-OWASP-recommended: input moderation + provenance tracking + trust-aware retrieval.
-
-Local heuristics (regex + unicode checks). No API.
-"""
+"""Scan memory for prompt-injection and secrets; redaction and trust scoring."""
 
 import re
 import unicodedata
@@ -35,8 +21,7 @@ INJECTION_PATTERNS = [
 _COMPILED = [re.compile(p, re.IGNORECASE) for p in INJECTION_PATTERNS]
 
 
-# Secret patterns — agent memory frequently captures pasted credentials.
-# Data exfiltration is one of the 5 agent attack surfaces (OWASP, 2026).
+# Secret patterns — detected and redacted before any text becomes memory.
 SECRET_PATTERNS = [
     (r"github_pat_[A-Za-z0-9_]{20,}", "GitHub PAT"),
     (r"ghp_[A-Za-z0-9]{36,}", "GitHub token"),

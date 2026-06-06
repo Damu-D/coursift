@@ -1,17 +1,4 @@
-"""
-Auto-generated Agent Constitution — learned guardrails, not hand-written rules.
-
-Implements 2026 frontier ideas:
-  - ReasoningBank: "distill mistakes into preventative lessons to build strategic
-    guardrails."
-  - Policy-as-Prompt: "translate policy into dynamic, enforceable guardrails."
-
-`coursift constitution` reads your consolidated insights + recurring corrections
-+ cross-project decisions and writes a CONSTITUTION.md the agent loads every
-session. The rules are LEARNED from what actually went wrong, per project.
-
-100% local, no API.
-"""
+"""Generate a project rules file (CONSTITUTION.md) from recorded lessons and decisions."""
 
 from collections import Counter
 from datetime import datetime

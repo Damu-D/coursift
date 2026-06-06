@@ -1,15 +1,4 @@
-"""
-Context Pack builder — the anti-context-rot, anti-cost engine.
-
-Solves (2026 problems):
-  - Context rot: agents degrade as the window fills with noise.
-  - "Lost in the middle": important info buried in long context is ignored.
-  - Cost: brute-force token expansion is financially unviable.
-
-Instead of dumping whole files into the model, Coursift returns a tight,
-token-budgeted, relevance-ranked subgraph — GraphRAG-style grounded context.
-This runs locally with NO API call.
-"""
+"""Build a token-budgeted, relevance-ranked context pack from the graph (local, no API)."""
 
 import re
 from difflib import SequenceMatcher

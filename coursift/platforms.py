@@ -1,18 +1,4 @@
-"""
-Multi-platform installer — make Coursift usable by ANY AI coding agent.
-
-Strategy (2026 reality):
-  - AGENTS.md is the open standard (Linux Foundation, 60k+ repos) read natively by
-    Codex, Cursor, Copilot, Gemini CLI, Aider, Windsurf, Zed, Factory, Jules,
-    RooCode, Kilo, Amp, OpenCode, and 20+ others.
-  - A few tools have their own preferred format, so we also write those directly:
-    Claude Code (skill), Cursor (.mdc rule), GitHub Copilot (instructions),
-    Gemini CLI (GEMINI.md), Windsurf (rule), Cline (rule).
-
-`coursift install --platform all` writes the universal AGENTS.md plus every
-tool-specific file, so whatever agent the user opens already knows how to use
-the graph.
-"""
+"""Install Coursift instructions for supported AI coding agents."""
 
 from pathlib import Path
 

@@ -1,15 +1,4 @@
-"""
-Selective forgetting — the competency every 2026 memory system fails at.
-
-Research finding: across long-context memory benchmarks, "most systems fail
-conspicuously on selective forgetting." Uncontrolled memory accumulation drives
-context rot and 65% of enterprise AI failures.
-
-Coursift can prune stale memory by age, and decays the influence of old session
-nodes so the graph stays sharp instead of bloating forever.
-
-Local, no API.
-"""
+"""Selective forgetting: prune stale memory by age and apply recency decay."""
 
 import time
 

@@ -1,18 +1,4 @@
-"""
-Onboarding generator — turn the graph into a "start here" codebase tour.
-
-Solves (2026 problem):
-  Developers spend ~58% of their time on program comprehension; onboarding to a
-  new codebase averages 6 weeks. The 2026 ideal is "a patient senior developer
-  that is partly an AI tool with a tree-sitter parser and a knowledge graph" —
-  map the repo, identify the stack, surface entry points, document the why.
-
-`coursift onboard <project>` writes an ONBOARDING.md: detected stack, entry
-points (god nodes), key modules, a suggested reading order, and the recorded
-decisions behind the code.
-
-100% local, no API.
-"""
+"""Generate an onboarding guide (stack, entry points, reading order) for a project."""
 
 from collections import Counter
 from datetime import datetime

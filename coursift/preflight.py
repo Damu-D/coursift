@@ -1,20 +1,4 @@
-"""
-Preflight — proactive, predictive briefing BEFORE you start coding.
-
-Implements the 2026→2027 "proactive agent" direction: "agents initiate based on
-learned patterns and contextual cues rather than awaiting explicit prompts."
-
-Given your current uncommitted changes (git diff), `coursift preflight` assembles
-a briefing WITHOUT being asked what to look at:
-  1. Blast radius of the symbols you're touching
-  2. Coupled files you should probably also edit (from git co-change history)
-  3. Past failure lessons relevant to these files
-  4. Established decisions for this project
-
-It turns "the agent starts from zero" into "the agent walks in already briefed."
-
-100% local, no API.
-"""
+"""Briefing from the current git diff: blast radius, coupled files, and relevant lessons."""
 
 import subprocess
 from pathlib import Path

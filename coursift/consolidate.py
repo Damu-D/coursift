@@ -1,18 +1,4 @@
-"""
-Memory consolidation — the "sleep cycle" for your knowledge graph.
-
-Implements ideas from 2026 frontier research:
-  - ReMe (Remember Me, Refine Me): multi-faceted distillation + utility-based
-    refinement — keep valid memories, prune outdated ones.
-  - Graph-based memory evolution: "analogous to human memory consolidation during
-    sleep — organize recent experiences, abstract general rules, forget trivia."
-
-`coursift consolidate` clusters raw failure lessons into higher-order INSIGHTS,
-deduplicates near-identical concepts, and prunes trivial nodes — so the graph
-gets *wiser* over time instead of just *bigger*.
-
-100% local, no API.
-"""
+"""Memory consolidation: distill repeated failures into insights, dedupe concepts, prune trivia."""
 
 from collections import Counter, defaultdict
 

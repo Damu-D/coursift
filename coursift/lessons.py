@@ -1,17 +1,4 @@
-"""
-Failure Memory — "negative knowledge" mined from your own Claude sessions.
-
-THE NOVEL BIT: every memory tool stores what worked. Research (2026) shows the
-real win is the opposite — "learning experiences are extracted from failures to
-prevent similar mistakes." Multi-agent systems descend into "hallucination loops"
-where they repeat approaches that already failed.
-
-No personal tool mines YOUR OWN Claude Code session logs for failures. Coursift
-does: it scans ~/.claude/projects/ for errors, reverts, and corrections, then
-surfaces them as lessons so the next session doesn't repeat them.
-
-100% local, no API.
-"""
+"""Mine past failures (errors, reverts, corrections) from local Claude session logs."""
 
 import json
 import re

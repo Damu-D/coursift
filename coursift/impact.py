@@ -1,17 +1,4 @@
-"""
-Blast Radius / Change Impact analysis.
-
-Solves (2026 problem):
-  "AI agents start from zero and modify requested components without checking
-  what depends on them — they don't know what depends on the code they're
-  changing." Result: late-stage rollbacks and ripple-effect breakage.
-
-`coursift impact <symbol>` walks the graph's reverse edges to show everything
-that (transitively) depends on a symbol/file — BEFORE you change it. Coursift's
-cross-project graph means the blast radius can span repositories.
-
-100% local, no API.
-"""
+"""Blast-radius analysis: transitive dependents of a symbol before you change it."""
 
 from collections import deque
 

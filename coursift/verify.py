@@ -1,16 +1,4 @@
-"""
-Grounding / anti-hallucination check.
-
-Solves (2026 problems):
-  - Hallucinated APIs: models invent functions/methods that don't exist.
-  - Slopsquatting: ~20% of AI code references non-existent packages.
-
-`coursift verify <symbol>` answers, from the real graph:
-  - Does this symbol actually exist? Where? In which project?
-  - If not, what are the closest real matches? (so the agent self-corrects)
-
-100% local, no API call. This is grounding-as-a-command.
-"""
+"""Check whether a symbol exists in the graph; suggest close matches if not."""
 
 from difflib import SequenceMatcher
 

@@ -1,13 +1,4 @@
-"""
-Local semantic engine — pure Python, zero heavy ML deps.
-
-Powers hybrid GraphRAG (graph structure + semantic similarity) and cross-project
-clone detection. No numpy, no torch, no API — works offline on any machine.
-
-Two similarity signals:
-  - Jaccard over body-token sets (great for code clones)
-  - TF-IDF cosine over identifier + docstring text (great for semantic search)
-"""
+"""Local semantic engine (TF-IDF + Jaccard) in pure Python, no external dependencies."""
 
 import math
 import re

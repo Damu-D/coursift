@@ -1,18 +1,4 @@
-"""
-Temporal Coupling — files that change together, mined from git history.
-
-Solves (2026 problem):
-  Impact tools uncover "hidden temporal relationships where files frequently
-  change together." These couplings are invisible to static analysis: two files
-  with no import between them but that always change in the same commit are
-  logically coupled. An agent editing one should check the other.
-
-`coursift coupling` mines git commit history across projects and reports the
-strongest co-change pairs (support + confidence), then adds them to the graph
-as `co_change` edges.
-
-Uses git locally. No API.
-"""
+"""Temporal coupling: files that change together, mined from git history."""
 
 import subprocess
 from collections import defaultdict

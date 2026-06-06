@@ -1,16 +1,4 @@
-"""
-Cost observability — token spend attribution across projects.
-
-Solves (2026 problem):
-  "AI agents consume 5-30x more tokens per task; only 39% of orgs can attribute
-  AI spend." The standard metric is shifting from cost-per-token to
-  cost-per-task, and attribution must tie cost to specific conversations.
-
-`coursift cost` parses the token-usage telemetry already in your Claude session
-logs and rolls it up per project — so you can see where your spend actually goes.
-
-100% local, no API. Prices are estimates (clearly labelled).
-"""
+"""Token-spend attribution across projects, parsed from local session logs."""
 
 import json
 from collections import defaultdict

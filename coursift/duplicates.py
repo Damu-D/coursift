@@ -1,17 +1,4 @@
-"""
-Cross-project semantic clone detection.
-
-Solves (2026 problem):
-  "Embeddings for semantic duplicate detection beyond keyword matching, enabling
-  cross-repository search." Duplicated logic across your repos is invisible until
-  you maintain the same bug in three places.
-
-`coursift duplicates` compares function/class bodies across ALL projects using
-token-set Jaccard similarity, and flags near-duplicates — candidates to extract
-into a shared package.
-
-100% local, no API.
-"""
+"""Cross-project near-duplicate function/class detection via token-set similarity."""
 
 from collections import defaultdict
 from pathlib import Path

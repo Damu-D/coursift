@@ -1,17 +1,4 @@
-"""
-Health & tech-debt scoring — one number that synthesizes the whole graph.
-
-Solves (2026 problem):
-  Technical debt costs US companies $2.4T/yr; AI error rates rise 2-5x on
-  unhealthy code (60%+ defect risk). "Comprehension debt" from AI-generated code
-  shows up 6-18 months later and is invisible to velocity dashboards.
-
-`coursift health` computes a 0-100 health score per project from signals Coursift
-already has: god-node concentration (coupling risk), duplicate ratio, doc drift,
-unverified dependencies, poisoned/stale memory, and failure density.
-
-100% local, no API.
-"""
+"""Per-project health / tech-debt score (0-100) computed from the graph."""
 
 from collections import Counter
 from pathlib import Path

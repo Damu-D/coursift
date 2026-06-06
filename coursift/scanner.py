@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 
 IGNORE_DIRS = {
     ".git", "node_modules", "__pycache__", ".next", "dist", "build",
-    ".turbo", "coverage", ".cache", "graphify-out", "coursift-out",
+    ".turbo", "coverage", ".cache", "coursift-out",
     ".claude", "venv", ".venv", "env", "site-packages", ".tox",
     ".mypy_cache", ".pytest_cache", ".ruff_cache", "vendor",
     "target", ".gradle", ".idea", ".vscode", "out", ".output",

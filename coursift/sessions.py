@@ -1,8 +1,4 @@
-"""
-Claude Code session indexer.
-Reads ~/.claude/projects/ and extracts decisions, file mentions, key concepts.
-This is Coursift's unique moat — Graphify has nothing like this.
-"""
+"""Index Claude Code session logs into memory nodes with provenance and trust scoring."""
 
 import json
 import re
