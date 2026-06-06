@@ -1,7 +1,8 @@
 <div align="center">
   <h1>Coursift</h1>
-  <p><strong>Cross-project knowledge graph and memory layer for Claude Code.</strong></p>
-  <p>Maps your code, Claude conversations, and decisions across <em>all</em> your projects — not just one.</p>
+  <p><strong>Cross-project knowledge graph and memory layer for AI coding agents.</strong></p>
+  <p>Maps your code, AI conversations, and decisions across <em>all</em> your projects — not just one.</p>
+  <p>📖 New here? Read <a href="docs/WHAT_IS_COURSIFT.md"><strong>What is Coursift?</strong></a> for a plain-English overview.</p>
 
   <a href="https://pypi.org/project/coursift/"><img src="https://img.shields.io/pypi/v/coursift?color=7c3aed" alt="PyPI"/></a>
   <a href="https://github.com/Damu-D/coursift/actions"><img src="https://github.com/Damu-D/coursift/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
