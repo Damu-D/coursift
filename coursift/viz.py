@@ -165,8 +165,29 @@ document.getElementById("search").addEventListener("input", function () {
 """
 
 
+def _json_for_html(data) -> str:
+    """Serialize JSON safe to embed in an inline <script> block.
+
+    json.dumps does not escape <, >, & or the JS line separators U+2028/U+2029,
+    so a scanned file or session log containing "</script>..." could break out of
+    the script tag and execute. Escaping these keeps the parsed data identical but
+    prevents HTML/JS injection (stored XSS) when the graph is opened in a browser.
+    """
+    raw = json.dumps(data)
+    replacements = {
+        "<": "\\u003c",
+        ">": "\\u003e",
+        "&": "\\u0026",
+        chr(0x2028): "\\u2028",
+        chr(0x2029): "\\u2029",
+    }
+    for ch, esc in replacements.items():
+        raw = raw.replace(ch, esc)
+    return raw
+
+
 def generate_html(graph: dict, output_path) -> None:
-    graph_json = json.dumps(graph)
+    graph_json = _json_for_html(graph)
     html = VIZ_TEMPLATE.replace("__GRAPH_DATA__", graph_json)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
