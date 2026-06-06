@@ -13,8 +13,21 @@ from dataclasses import dataclass, field
 IGNORE_DIRS = {
     ".git", "node_modules", "__pycache__", ".next", "dist", "build",
     ".turbo", "coverage", ".cache", "graphify-out", "coursift-out",
-    ".claude", "venv", ".venv", "env",
+    ".claude", "venv", ".venv", "env", "site-packages", ".tox",
+    ".mypy_cache", ".pytest_cache", ".ruff_cache", "vendor",
+    "target", ".gradle", ".idea", ".vscode", "out", ".output",
 }
+
+
+def _is_ignored_dir(part: str) -> bool:
+    """Skip known dirs, any hidden dir, and anything that looks like a venv."""
+    if part in IGNORE_DIRS:
+        return True
+    if part.startswith(".") and part not in {".", ".."}:
+        return True  # hidden dirs (.venv-test, .anything)
+    if part.endswith(("-env", "-venv", ".egg-info")):
+        return True
+    return False
 
 CODE_EXTENSIONS = {
     ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
@@ -160,9 +173,12 @@ def scan_project(project_path: str) -> tuple[list[Node], list[Edge]]:
     all_nodes: list[Node] = []
     all_edges: list[Edge] = []
 
+    # Build relative parts check so we only inspect parts under the project root
+    root_parts = len(root.parts)
+
     for path in root.rglob("*"):
-        # Skip ignored dirs
-        if any(part in IGNORE_DIRS for part in path.parts):
+        # Skip ignored dirs (only check parts below the project root)
+        if any(_is_ignored_dir(part) for part in path.parts[root_parts:]):
             continue
         if not path.is_file():
             continue
