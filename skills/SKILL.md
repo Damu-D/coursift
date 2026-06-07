@@ -63,6 +63,12 @@ coursift secrets          # scan memory for leaked credentials
 coursift health           # tech-debt score per project
 ```
 
+## Scoping
+
+Commands auto-scope to the project of the current directory, so results stay
+focused. Use `--all` to search every project or `--project <name>` to target a
+specific one. Scoped commands: `search`, `verify`, `context`, `impact`, `lessons`.
+
 ## Behavioral rules
 
 - At the start of a coding task, run `coursift preflight .` and honor its

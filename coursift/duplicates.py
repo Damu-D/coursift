@@ -47,7 +47,11 @@ def find_duplicates(threshold: float = 0.6, cross_project_only: bool = False) ->
                 continue
 
             sim = jaccard(u.get("tokens", []), v.get("tokens", []))
-            if sim >= threshold:
+            # Cross-project pairs need a higher bar — same-named but unrelated
+            # functions in different projects are a common false positive.
+            cross = u.get("project") != v.get("project")
+            bar = threshold + (0.15 if cross else 0.0)
+            if sim >= bar:
                 results.append({
                     "similarity": round(sim, 2),
                     "a": {"label": u.get("label"), "project": u.get("project"),

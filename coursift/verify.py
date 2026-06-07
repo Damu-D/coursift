@@ -9,16 +9,19 @@ def _similar(a: str, b: str) -> float:
     return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 
-def verify_symbol(symbol: str) -> dict:
+def verify_symbol(symbol: str, scope: set[str] | None = None) -> dict:
     """
     Check whether a symbol (function/class/file) exists in the graph.
+    `scope` limits the search to a set of project names (None = all projects).
     Returns a structured result dict.
     """
+    from coursift.scope import in_scope
+
     graph = load_graph()
     if not graph:
         return {"status": "no_graph", "message": "Run `coursift build` first."}
 
-    nodes = graph.get("nodes", [])
+    nodes = [n for n in graph.get("nodes", []) if in_scope(n, scope)]
     target = symbol.strip()
 
     exact = [

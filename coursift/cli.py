@@ -265,18 +265,30 @@ def open_viz():
 def context(
     question: str = typer.Argument(..., help="What you need context for"),
     max_tokens: int = typer.Option(2000, "--max-tokens", "-t", help="Token budget"),
+    project: str = typer.Option(None, "--project", "-p", help="Limit to one project"),
+    all_projects: bool = typer.Option(False, "--all", help="Search every project"),
 ):
     """Build a token-budgeted, grounded context pack (anti context-rot, anti-cost)."""
     from coursift.context_pack import build_context_pack
-    pack = build_context_pack(question, max_tokens=max_tokens)
+    from coursift.scope import resolve_scope
+    scope, label = resolve_scope(project, all_projects)
+    rprint(f"[dim]scope: {label}[/dim]")
+    pack = build_context_pack(question, max_tokens=max_tokens, scope=scope)
     print(pack)
 
 
 @app.command()
-def verify(symbol: str = typer.Argument(..., help="Function/class/file to verify exists")):
+def verify(
+    symbol: str = typer.Argument(..., help="Function/class/file to verify exists"),
+    project: str = typer.Option(None, "--project", "-p", help="Limit to one project"),
+    all_projects: bool = typer.Option(False, "--all", help="Search every project"),
+):
     """Check if a symbol really exists (anti-hallucination grounding)."""
     from coursift.verify import verify_symbol
-    r = verify_symbol(symbol)
+    from coursift.scope import resolve_scope
+    scope, label = resolve_scope(project, all_projects)
+    rprint(f"[dim]scope: {label}[/dim]")
+    r = verify_symbol(symbol, scope=scope)
     if r["status"] == "found":
         rprint(f"[green]✓ '{r['symbol']}' exists[/green] ({len(r['matches'])} match(es)):")
         for m in r["matches"]:
@@ -361,13 +373,17 @@ def forget(older_than: str = typer.Argument(..., help="Age e.g. 90d, 4w, 12h")):
 @app.command()
 def lessons(
     project: str = typer.Option(None, "--project", "-p", help="Filter to one project name"),
+    all_projects: bool = typer.Option(False, "--all", help="Show lessons from every project"),
 ):
     """Show failure lessons mined from your Claude sessions (avoid repeating them)."""
     from coursift.lessons import mine_lessons
     from coursift.config import list_projects
+    from coursift.scope import resolve_scope
+    scope, label = resolve_scope(project, all_projects)
+    rprint(f"[dim]scope: {label}[/dim]")
     found = mine_lessons(list_projects())
-    if project:
-        found = [l for l in found if project.lower() in l.project.lower()]
+    if scope is not None:
+        found = [l for l in found if l.project.lower() in scope]
     if not found:
         rprint("[green]No failure patterns found in your sessions.[/green]")
         return
@@ -383,12 +399,17 @@ def lessons(
 def impact(
     symbol: str = typer.Argument(..., help="Symbol/file you want to change"),
     depth: int = typer.Option(3, "--depth", "-d", help="Max dependency depth"),
+    project: str = typer.Option(None, "--project", "-p", help="Limit target to one project"),
+    all_projects: bool = typer.Option(False, "--all", help="Match symbol in any project"),
 ):
     """Blast radius: what depends on this symbol BEFORE you change it."""
     from coursift.impact import blast_radius
-    r = blast_radius(symbol, max_depth=depth)
+    from coursift.scope import resolve_scope
+    scope, label = resolve_scope(project, all_projects)
+    rprint(f"[dim]scope: {label}[/dim]")
+    r = blast_radius(symbol, max_depth=depth, scope=scope)
     if r["status"] == "not_found":
-        rprint(f"[yellow]'{symbol}' not found in the graph.[/yellow]")
+        rprint(f"[yellow]'{symbol}' not found in the graph (scope: {label}).[/yellow]")
         return
     if r["status"] != "ok":
         rprint(f"[yellow]{r['status']}[/yellow]")
@@ -536,10 +557,15 @@ def preflight(
 def search(
     query: str = typer.Argument(..., help="Semantic search across all code"),
     top: int = typer.Option(10, "--top", "-k", help="Number of results"),
+    project: str = typer.Option(None, "--project", "-p", help="Limit to one project"),
+    all_projects: bool = typer.Option(False, "--all", help="Search every project"),
 ):
     """Semantic code search across all projects (local TF-IDF, no API)."""
     from coursift.embed import TfidfIndex
     from coursift.graph import load_graph
+    from coursift.scope import resolve_scope, in_scope
+    scope, label = resolve_scope(project, all_projects)
+    rprint(f"[dim]scope: {label}[/dim]")
     graph = load_graph()
     if not graph:
         rprint("[yellow]No graph. Run `coursift build` first.[/yellow]")
@@ -547,7 +573,7 @@ def search(
     idx = TfidfIndex()
     nodemap = {}
     for n in graph.get("nodes", []):
-        if n.get("kind") in ("function", "class", "file"):
+        if n.get("kind") in ("function", "class", "file") and in_scope(n, scope):
             text = " ".join([n.get("label", ""), n.get("docstring", ""),
                              " ".join(n.get("tokens", []))])
             idx.add(n["id"], text)

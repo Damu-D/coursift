@@ -5,17 +5,23 @@ from collections import deque
 from coursift.graph import load_graph
 
 
-def _find_targets(nodes: list[dict], symbol: str) -> list[dict]:
+def _find_targets(nodes: list[dict], symbol: str, scope: set[str] | None) -> list[dict]:
+    from coursift.scope import in_scope
     s = symbol.strip().lower()
     return [
         n for n in nodes
         if n.get("label", "").lower() == s
         and n.get("kind") in ("function", "class", "file")
+        and in_scope(n, scope)
     ]
 
 
-def blast_radius(symbol: str, max_depth: int = 3) -> dict:
-    """Compute transitive dependents (who breaks if `symbol` changes)."""
+def blast_radius(symbol: str, max_depth: int = 3, scope: set[str] | None = None) -> dict:
+    """Compute transitive dependents (who breaks if `symbol` changes).
+
+    `scope` limits which project's symbol is the target (None = all). Dependents
+    are still followed across projects, since cross-project impact is meaningful.
+    """
     graph = load_graph()
     if not graph:
         return {"status": "no_graph"}
@@ -24,7 +30,7 @@ def blast_radius(symbol: str, max_depth: int = 3) -> dict:
     edges = graph.get("edges", [])
     node_by_id = {n["id"]: n for n in nodes}
 
-    targets = _find_targets(nodes, symbol)
+    targets = _find_targets(nodes, symbol, scope)
     if not targets:
         return {"status": "not_found", "symbol": symbol}
 

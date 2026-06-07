@@ -44,12 +44,19 @@ def generate_report(graph: dict, output_path) -> None:
         "",
         "## God Nodes",
         "",
-        "> The most-connected concepts. Everything flows through these.",
+        "> The most-connected concepts, grouped by project so every project surfaces.",
         "",
     ]
-    for n in god_nodes:
-        doc = f" — _{n['docstring'][:100]}_" if n.get("docstring") else ""
-        lines.append(f"- **{n['label']}** `{n['kind']}` ({n['project']}){doc}")
+    all_god = [n for n in nodes if n.get("god_node")]
+    by_project: dict[str, list[dict]] = {}
+    for n in all_god:
+        by_project.setdefault(n.get("project", "?"), []).append(n)
+    for project, gnodes in by_project.items():
+        lines.append(f"**{project}**")
+        for n in gnodes[:5]:
+            doc = f" — _{n['docstring'][:100]}_" if n.get("docstring") else ""
+            lines.append(f"- **{n['label']}** `{n['kind']}`{doc}")
+        lines.append("")
 
     if cross_project:
         lines += [

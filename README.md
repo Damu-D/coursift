@@ -131,9 +131,30 @@ Coursift writes its instructions in the format each tool expects:
 
 ---
 
+## Project scoping
+
+The graph holds all your projects, but commands focus on **the project you're working in** so results stay clean. When you run a command from inside a registered project's folder, Coursift auto-scopes to it:
+
+```bash
+cd ~/projects/myapp
+coursift verify config       # only myapp's `config`, not every project's
+coursift search "auth"       # only myapp results
+```
+
+Override when you want to:
+
+```bash
+coursift verify config --all            # search every project
+coursift search "auth" --project other  # a specific project
+```
+
+Commands that scope: `search`, `verify`, `context`, `impact`, `lessons`. God-node rankings and health are computed per project, so a large project never drowns out a small one.
+
+---
+
 ## How it works
 
-`build` scans each registered project (Python via AST; other languages structurally) and reads your local AI session logs, then connects everything into one graph saved under `~/.coursift/`. Every command except `query` runs fully offline; `query` uses your own `ANTHROPIC_API_KEY`.
+`build` scans each registered project (Python via AST; other languages structurally) and reads your local AI session logs, then connects everything into one graph saved under `~/.coursift/`. Commands auto-scope to the project you're in (override with `--all` / `--project`). Every command except `query` runs fully offline; `query` uses your own `ANTHROPIC_API_KEY`.
 
 ---
 

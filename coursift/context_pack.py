@@ -41,16 +41,19 @@ def _relevance(node: dict, terms: list[str]) -> float:
     return score
 
 
-def build_context_pack(question: str, max_tokens: int = 2000) -> str:
+def build_context_pack(question: str, max_tokens: int = 2000, scope: set[str] | None = None) -> str:
     """
     Produce a token-budgeted, grounded context pack for a question.
     Pulls the most relevant nodes + their 1-hop neighbors (GraphRAG anchor).
+    `scope` limits to a set of project names (None = all projects).
     """
+    from coursift.scope import in_scope
+
     graph = load_graph()
     if not graph:
         return "No graph found. Run `coursift build` first."
 
-    nodes = {n["id"]: n for n in graph.get("nodes", [])}
+    nodes = {n["id"]: n for n in graph.get("nodes", []) if in_scope(n, scope)}
     edges = graph.get("edges", [])
     terms = [t.lower() for t in re.findall(r"\w+", question) if len(t) > 2]
 

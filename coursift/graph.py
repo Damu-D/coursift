@@ -71,15 +71,21 @@ def build_graph(
 
     edges_list.extend(cross_project_edges)
 
-    # ---- God nodes (most connected) ----
+    # ---- God nodes (most connected), computed PER PROJECT ----
+    # Global ranking lets a large project dominate and hides small projects'
+    # key nodes, so rank within each project instead.
     degree: Counter = Counter()
     for edge in edges_list:
         degree[edge["source"]] += 1
         degree[edge["target"]] += 1
 
-    top_10 = [nid for nid, _ in degree.most_common(10)]
-    for nid in top_10:
-        if nid in nodes_dict:
+    by_project: dict[str, list[tuple[str, int]]] = {}
+    for nid, node in nodes_dict.items():
+        proj = node.get("project", "")
+        by_project.setdefault(proj, []).append((nid, degree.get(nid, 0)))
+    for proj, items in by_project.items():
+        items.sort(key=lambda x: x[1], reverse=True)
+        for nid, _ in items[:5]:
             nodes_dict[nid]["god_node"] = True
 
     graph = {
